@@ -1,0 +1,106 @@
+{
+    "seed": 1223,
+    "data":
+    {
+        "train_manifest_path": "openmic_train.json",
+        "val_manifest_path": "openmic_valid.json",
+        "test_manifest_path": "openmic_test.json",
+        "requires_vggish": true,
+        "requires_openl3": true,
+        "requires_pann": true,
+        "requires_passt": true,
+
+        "mixup": 0,
+        "sr": 32000,
+        "robust_mode": null,
+        "robust_rate": null,
+
+        "featurizer":{
+            "name": "waveform_featurizer",
+            "args": {}
+        },
+        
+        "batch_size": 16,
+        "train_shuffle": true,
+        "num_workers": 8
+    },
+
+    "model":
+    {
+        "backbone":{
+            "feature": "openl3",
+            "student": {
+                "name": "PretrainedFeatureClassifier",
+                "ckpt": null,
+                "args": {
+                    "input_dim": 512,
+                    "num_classes": 20
+                }
+            },
+            "teacher": null,
+            "teacher_learning": false,
+            "learn_from": null
+        },
+
+        "optim":{
+            "optimizer": {
+                "name": "SGD",
+                "args": {
+                    "lr": 0.1,
+                    "weight_decay": 0.0
+                }
+            },
+            "scheduler": {
+                "name": "ReduceLROnPlateau",
+                "monitor": "val/loss/total",
+                "args": {
+                    "factor": 0.1,
+                    "patience": 1
+                }
+            }
+        }
+    }, 
+
+    "trainer":
+    {
+        "args":
+        {
+            "max_epochs": -1,
+            "max_steps": 80000,
+            "gradient_clip_val": 1.0,
+            "num_sanity_val_steps": -1,
+
+            "accelerator": "gpu",
+            "devices": [0],
+            "deterministic": true,
+
+            "check_val_every_n_epoch": 1,
+            "log_every_n_steps": 50
+        },
+
+        "logger":
+        {
+            "save_dir": "work_dir_openmic/pretrained_openl3",
+            "name": "log"
+        },
+
+        "checkpoint":
+        {
+            "dirpath": "work_dir_openmic/pretrained_openl3",
+            "filename": "epoch={epoch}-val_mAP={val/mAP:.3f}",
+            "auto_insert_metric_name": false,
+
+            "monitor": "val/mAP",
+            "mode": "max",
+            "every_n_epochs": 1,
+            "save_top_k": 1
+        },
+
+        "early_stopping":
+        {
+            "monitor": "val/loss/total",
+            "mode": "min",
+            "patience": 3
+        }
+    }
+}

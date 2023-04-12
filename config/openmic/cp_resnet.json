@@ -1,0 +1,122 @@
+{
+    "seed": 1223,
+    "data":
+    {
+        "train_manifest_path": "openmic_train.json",
+        "val_manifest_path": "openmic_valid.json",
+        "test_manifest_path": "openmic_test.json",
+        "requires_vggish": false,
+        "requires_openl3": false,
+        "requires_passt": false,
+        "requires_pann": true,
+
+        "mixup": 0.3,
+        "sr": 32000,
+        "robust_mode": null,
+        "robust_rate": null,
+    
+        "featurizer":{
+            "name": "log_mel_featurizer",
+            "args": {
+                "n_fft": 1024,
+                "hop_length": 320,
+                "win_length": 800,
+                "sr": 32000,
+                "n_mels": 128,
+
+                "fmin": 0,
+                "fmax": 16000,
+                "fmin_aug_range": 20,
+                "fmax_aug_range": 2000,
+
+                "normalize_mean": -3.7,
+                "normalize_std": 3.1,
+
+                "freqm": 48,
+                "timem": 192
+            }
+        },
+        "batch_size": 16,
+        "train_shuffle": true,
+        "num_workers": 16
+    },
+
+    "model":
+    {
+        "backbone":{
+            "feature": "pann",
+            "student": {
+                "name": "CPResNet",
+                "ckpt": null,
+                "args": {
+                    "rho": 3,
+                    "in_channel": 1,
+                    "base_channels": 128,
+                    "num_classes": 20
+                }
+            },
+            "teacher": null
+        },
+
+        "optim":{
+            "optimizer": {
+                "name": "Adam",
+                "args": {
+                    "lr": 0.0001,
+                    "weight_decay": 0.0001
+                }
+            },
+            "scheduler": {
+                "name": "ReduceLROnPlateau",
+                "monitor": "val/loss/total",
+                "args": {
+                    "factor": 0.2,
+                    "patience": 8
+                }
+            }
+        }
+    },    
+
+    "trainer":
+    {
+        "args":
+        {
+            "max_epochs": -1,
+            "max_steps": 80000,
+            "gradient_clip_val": 1.0,
+            "num_sanity_val_steps": -1,
+
+            "accelerator": "gpu",
+            "devices": [0],
+            "deterministic": true,
+
+            "check_val_every_n_epoch": 1,
+            "log_every_n_steps": 50
+        },
+
+        "logger":
+        {
+            "save_dir": "work_dir/cp_resnet_rho3_baseline",
+            "name": "log"
+        },
+
+        "checkpoint":
+        {
+            "dirpath": "work_dir/cp_resnet_rho3_baseline",
+            "filename": "epoch={epoch}-val_mAP={val/mAP:.3f}",
+            "auto_insert_metric_name": false,
+
+            "monitor": "val/mAP",
+            "mode": "max",
+            "every_n_epochs": 1,
+            "save_top_k": 5
+        },
+
+        "early_stopping":
+        {
+            "monitor": "val/loss/total",
+            "mode": "min",
+            "patience": 20
+        }
+    }
+}
