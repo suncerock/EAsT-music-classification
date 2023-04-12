@@ -11,9 +11,6 @@
         "requires_pann": true,
 
         "mixup": 0.3,
-        "sr": 32000,
-        "robust_mode": null,
-        "robust_rate": null,
     
         "featurizer":{
             "name": "log_mel_featurizer",

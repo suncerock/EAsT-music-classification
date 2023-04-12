@@ -9,7 +9,6 @@ class LatentSpaceDataset(Data.Dataset):
     def __init__(
         self,
         manifest_path,
-        sr=16000,
 
         requires_vggish=False,
         requires_openl3=False,
@@ -26,7 +25,6 @@ class LatentSpaceDataset(Data.Dataset):
             self.data = [json.loads(line) for line in f]
 
         self.featurizer = featurizer
-        self.sr = sr
 
         self.requires_vggish = requires_vggish
         self.requires_openl3 = requires_openl3
@@ -62,15 +60,15 @@ class LatentSpaceDataset(Data.Dataset):
 
         y = torch.tensor(data["label"], dtype=torch.float32)
 
-        output_data["y"] = torch.where(y == 1, torch.ones_like(y), torch.zeros_like(y))
+        output_data["y"] = (y == 1).float()
         output_data["y_mask"] = (y != 0).bool()
 
         if self.requires_vggish:
             feature = torch.from_numpy(np.load(data["vggish"]))
-            output_data["vggish"] = (feature.float() - 128) / 256
+            output_data["vggish"] = (feature.float() - 128) / 256  # normalization
         if self.requires_openl3:
             feature = torch.from_numpy(np.load(data["openl3"]))
-            output_data["openl3"] = feature.float() - 2.24
+            output_data["openl3"] = feature.float() - 2.24  # quick and dirt normalization
         if self.requires_pann:
             output_data["pann"] = torch.from_numpy(np.load(data["pann"]))
         if self.requires_passt:

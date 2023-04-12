@@ -11,7 +11,6 @@ class LatentSpaceDataModule(pl.LightningDataModule):
         train_manifest_path,
         val_manifest_path,
         test_manifest_path,
-        sr,
 
         requires_vggish,
         requires_openl3,
@@ -29,7 +28,6 @@ class LatentSpaceDataModule(pl.LightningDataModule):
 
         self.train_dataset = LatentSpaceDataset(
             train_manifest_path,
-            sr=sr,
             requires_vggish=requires_vggish,
             requires_openl3=requires_openl3,
             requires_passt=requires_passt,
@@ -39,7 +37,6 @@ class LatentSpaceDataModule(pl.LightningDataModule):
         )
         self.val_dataset = LatentSpaceDataset(
             val_manifest_path,
-            sr=sr,
             requires_vggish=requires_vggish,
             requires_openl3=requires_openl3,
             requires_pann=requires_pann,
@@ -49,7 +46,6 @@ class LatentSpaceDataModule(pl.LightningDataModule):
         )
         self.test_dataset = LatentSpaceDataset(
             test_manifest_path,
-            sr=sr,
             requires_vggish=requires_vggish,
             requires_openl3=requires_openl3,
             requires_pann=requires_pann,

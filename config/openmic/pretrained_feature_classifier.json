@@ -11,9 +11,6 @@
         "requires_passt": true,
 
         "mixup": 0,
-        "sr": 32000,
-        "robust_mode": null,
-        "robust_rate": null,
 
         "featurizer":{
             "name": "waveform_featurizer",
@@ -22,7 +19,7 @@
         
         "batch_size": 16,
         "train_shuffle": true,
-        "num_workers": 8
+        "num_workers": 16
     },
 
     "model":

@@ -11,9 +11,6 @@
         "requires_passt": true,
 
         "mixup": 0.0,
-        "sr": 16000,
-        "robust_mode": null,
-        "robust_rate": null,
     
         "featurizer":{
             "name": "log_mel_featurizer",
