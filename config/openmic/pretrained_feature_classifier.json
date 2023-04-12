@@ -34,9 +34,7 @@
                     "num_classes": 20
                 }
             },
-            "teacher": null,
-            "teacher_learning": false,
-            "learn_from": null
+            "teacher": null
         },
 
         "optim":{

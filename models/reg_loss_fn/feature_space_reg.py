@@ -29,7 +29,7 @@ class FeatureSpaceRegularizationLoss(nn.Module):
         self.student_expand = {stage: args.get("student_expand", -1) for stage, args in stages_args.items()}
         self.teacher_expand = {stage: args.get("teacher_expand", -1) for stage, args in stages_args.items()}
 
-    def forward(self, output_dict_s, output_dict_t):
+    def forward(self, output_dict_s, output_dict_t, mask):
         loss = None
         for stage in self.stage_args:
             if not self.weights[stage] > 0:
@@ -58,20 +58,16 @@ class FeatureSpaceRegularizationLoss(nn.Module):
         else:
             return torch.repeat_interleave(feature, expand, dim=1)
 
-    def compute_distance_correlation(self, x, y, mode="l2"):
+    def compute_distance_correlation(self, x, y):
         # x = F.normalize(x, dim=-1)  # N, T, C or N, C
         # y = F.normalize(y, dim=-1)  # N, T, C or N, C
 
         if len(x.shape) == 3:
             x = x.transpose(0, 1)  # T, N, C
             y = y.transpose(0, 1)  # T, N, C
-        
-        if mode == "l2":
-            x = torch.sqrt(torch.sum(torch.square(x.unsqueeze(-3) - x.unsqueeze(-2)), dim = -1) + 1e-12)  # T, N, N or N, N
-            y = torch.sqrt(torch.sum(torch.square(y.unsqueeze(-3) - y.unsqueeze(-2)), dim = -1) + 1e-12)  # T, N, N or N, N
-        elif mode == "cosine":
-            x = torch.matmul(x, x.transpose(-1, -2))
-            y = torch.matmul(y, y.transpose(-1, -2))
+ 
+        x = torch.sqrt(torch.sum(torch.square(x.unsqueeze(-3) - x.unsqueeze(-2)), dim = -1) + 1e-12)  # T, N, N or N, N
+        y = torch.sqrt(torch.sum(torch.square(y.unsqueeze(-3) - y.unsqueeze(-2)), dim = -1) + 1e-12)  # T, N, N or N, N
 
         x = x - torch.mean(x, dim=-2, keepdims=True) - torch.mean(x, dim=-1, keepdims=True) + torch.mean(x, dim=(-2, -1), keepdims=True)
         y = y - torch.mean(y, dim=-2, keepdims=True) - torch.mean(y, dim=-1, keepdims=True) + torch.mean(y, dim=(-2, -1), keepdims=True)
@@ -83,7 +79,7 @@ class FeatureSpaceRegularizationLoss(nn.Module):
         correlation_r = xy / torch.sqrt(xx * yy + 1e-9)
         return (1 - correlation_r).mean()
 
-    def compute_distance(self, x, y):
+    def compute_cosine_distance_difference(self, x, y):
         x = F.normalize(x, dim=-1)  # N, T, C or N, C
         y = F.normalize(y, dim=-1)  # N, T, C or N, C
 
@@ -99,10 +95,8 @@ class FeatureSpaceRegularizationLoss(nn.Module):
 
     def compute_reg_loss(self, x, y):
         if self.mode == "distance_correlation":
-            return self.compute_distance_correlation(x, y, mode="l2")
-        elif self.mode == "cosine_distance_correlation":
-            return self.compute_distance_correlation(x, y, mode="cosine")
-        elif self.mode == "distance":
-            return self.compute_distance(x, y)
+            return self.compute_distance_correlation(x, y)
+        elif self.mode == "cosine_distance_difference":
+            return self.compute_cosine_distance_difference(x, y)
         else:
             raise NotImplementedError

@@ -60,15 +60,14 @@
                     "num_classes": 20
                 }
             },
-            "teacher_learning": false,
-            "dist_loss_weight": 0.8,
-            "distillation":{
+            "reg_loss_weight": 0.8,
+            "regularization":{
                 "name": "FeatureSpaceRegularizationLoss",
                 "args": {
                     "mode": "distance_correlation",
                     "stages_args": {
-                        "1": {"weight": 1.0, "student_expand": 1, "teacher_expand": 6},
-                        "2": {"weight": 1.0, "student_expand": 1, "teacher_expand": 6},
+                        "1": {"weight": 0.0, "student_expand": 1, "teacher_expand": 6},
+                        "2": {"weight": 0.0, "student_expand": 1, "teacher_expand": 6},
                         "3": {"weight": 1.0, "student_expand": 1, "teacher_expand": 6}
                     }
                 }

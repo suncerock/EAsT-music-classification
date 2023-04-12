@@ -190,11 +190,7 @@ class CPResNet(nn.Module):
         output = self.feed_forward(output)
         return dict(
             logits=torch.sigmoid(output),
-            pred_logits=torch.sigmoid(output),
-            dist_logits=torch.sigmoid(output),
             scores=output,
-            pred_scores=output,
-            dist_scores=output,
             output_1=output_1.mean(dim=-2).transpose(-1, -2),
             output_2=output_2.mean(dim=-2).transpose(-1, -2),
             output_3=output_3.mean(dim=-2).transpose(-1, -2)

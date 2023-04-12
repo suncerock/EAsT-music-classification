@@ -5,7 +5,7 @@ import torch.nn.functional as F
 import pytorch_lightning as pl
 
 from .basemodels import get_base_model_and_pred_from
-from .dist_loss_fn import get_dist_loss_fn
+from .reg_loss_fn import get_reg_loss_fn
 from .metrics import MultiLabelBinaryEval
 
 class TeacherStudentModel(pl.LightningModule):
@@ -22,13 +22,11 @@ class TeacherStudentModel(pl.LightningModule):
 
         if self.backbone_cfg["teacher"] is not None:
             self.teacher, self.teacher_pred_from = get_base_model_and_pred_from(self.backbone_cfg["teacher"]) 
-            if not self.backbone_cfg["teacher_learning"]:
-                for param in self.teacher.parameters():
-                    param.requires_grad = False
-            else:
-                raise NotImplementedError
-            self.dist_loss_weight = self.backbone_cfg["dist_loss_weight"]
-            self.dist_loss_fn = get_dist_loss_fn(self.backbone_cfg["distillation"])
+            for param in self.teacher.parameters():
+                param.requires_grad = False
+
+            self.reg_loss_weight = self.backbone_cfg["reg_loss_weight"]
+            self.reg_loss_fn = get_reg_loss_fn(self.backbone_cfg["regularization"])
         else:
             self.teacher = None
 
@@ -69,30 +67,26 @@ class TeacherStudentModel(pl.LightningModule):
         loss_dict = dict()
         output_dict_s = self.submodel_forward(batch, self.student, self.student_pred_from)
 
-        loss_pred = F.binary_cross_entropy(output_dict_s['pred_logits'], y, reduction='none')
+        loss_pred = F.binary_cross_entropy(output_dict_s['logits'], y, reduction='none')
         loss_pred = loss_pred[y_mask].mean()
 
         loss_dict['loss/pred'] = loss_pred
 
         if self.teacher is not None:
             output_dict_t = self.submodel_forward(batch, self.teacher, self.teacher_pred_from)
-            loss_dist = self.dist_loss_fn(output_dict_s, output_dict_t)
-            # loss_dist = loss_dist[y_mask].mean()
-            loss_dict['loss/dist'] = loss_dist
-            loss = loss_pred * (1 - self.dist_loss_weight) + loss_dist * self.dist_loss_weight
+            loss_reg = self.reg_loss_fn(output_dict_s, output_dict_t, y_mask)
+            loss_dict['loss/reg'] = loss_reg
+            loss = loss_pred * (1 - self.reg_loss_weight) + loss_reg * self.reg_loss_weight
         else:
             loss = loss_pred
         loss_dict['loss/total'] = loss
         return loss_dict, output_dict_s['logits']
 
     def submodel_forward(self, batch, model, pred_from):
-        x = batch["x"]
-        feature = batch[self.feature]
-
         if pred_from == "x":
-            return model(x)
+            return model(batch["x"])
         elif pred_from == "feature":
-            return model(feature)
+            return model(batch[self.feature])
         else:
             raise NotImplementedError
 
@@ -107,20 +101,14 @@ class TeacherStudentModel(pl.LightningModule):
 
     def on_train_epoch_end(self) -> None:
         metric_dict = self.train_metrics.compute()
-        if not isinstance(metric_dict, dict):
-            metric_dict = dict(acc=metric_dict)
         self.log_dict_prefix(metric_dict, 'train')
 
     def on_validation_epoch_end(self) -> None:
         metric_dict = self.val_metrics.compute()
-        if not isinstance(metric_dict, dict):
-            metric_dict = dict(acc=metric_dict)
         self.log_dict_prefix(metric_dict, 'val')
 
     def on_test_epoch_end(self) -> None:
         metric_dict = self.test_metrics.compute()
-        if not isinstance(metric_dict, dict):
-            metric_dict = dict(acc=metric_dict)
         self.log_dict_prefix(metric_dict, 'test')
 
     def log_dict_prefix(self, d, prefix):
