@@ -1,3 +1,8 @@
+"""
+Code for CP ResNet
+
+Referred to the code from the official implementation: https://github.com/kkoutini/cpjku_dcase20/blob/master/models/cp_resnet.py
+"""
 # coding: utf-8
 import math
 
