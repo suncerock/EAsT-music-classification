@@ -5,10 +5,10 @@
         "train_manifest_path": "openmic_train.json",
         "val_manifest_path": "openmic_valid.json",
         "test_manifest_path": "openmic_test.json",
-        "requires_vggish": false,
+        "requires_vggish": true,
         "requires_openl3": false,
         "requires_passt": false,
-        "requires_pann": true,
+        "requires_pann": false,
 
         "mixup": 0.3,
     
@@ -41,18 +41,37 @@
     "model":
     {
         "backbone":{
-            "feature": "pann",
+            "feature": "vggish",
             "student": {
                 "name": "CPResNet",
                 "ckpt": null,
                 "args": {
-                    "rho": 3,
+                    "rho": 7,
                     "in_channel": 1,
                     "base_channels": 128,
                     "num_classes": 20
                 }
             },
-            "teacher": null
+            "teacher": {
+                "name": "PretrainedFeatureClassifier",
+                "ckpt": "work_dir_openmic/lr_vggish/epoch=23-val_mAP=0.817.ckpt",
+                "args": {
+                    "input_dim": 128,
+                    "num_classes": 20
+                }
+            },
+            "reg_loss_weight": 0.8,
+            "regularization":{
+                "name": "FeatureSpaceRegularizationLoss",
+                "args": {
+                    "mode": "distance_correlation",
+                    "stages_args": {
+                        "1": {"weight": 0.0, "student_expand": 1, "teacher_expand": 6},
+                        "2": {"weight": 0.0, "student_expand": 1, "teacher_expand": 6},
+                        "3": {"weight": 1.0, "student_expand": 1, "teacher_expand": 6}
+                    }
+                }
+            }
         },
 
         "optim":{
@@ -93,27 +112,27 @@
 
         "logger":
         {
-            "save_dir": "work_dir/cp_resnet_rho3_baseline",
+            "save_dir": "work_dir_openmic/east_final_vggish",
             "name": "log"
         },
 
         "checkpoint":
         {
-            "dirpath": "work_dir/cp_resnet_rho3_baseline",
+            "dirpath": "work_dir_openmic/east_final_vggish",
             "filename": "epoch={epoch}-val_mAP={val/mAP:.3f}",
             "auto_insert_metric_name": false,
 
             "monitor": "val/mAP",
             "mode": "max",
             "every_n_epochs": 1,
-            "save_top_k": 5
+            "save_top_k": 1
         },
 
         "early_stopping":
         {
             "monitor": "val/loss/total",
             "mode": "min",
-            "patience": 20
+            "patience": 15
         }
     }
 }

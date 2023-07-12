@@ -2,15 +2,15 @@
     "seed": 1223,
     "data":
     {
-        "train_manifest_path": "openmic_train.json",
-        "val_manifest_path": "openmic_valid.json",
-        "test_manifest_path": "openmic_test.json",
-        "requires_vggish": true,
-        "requires_openl3": true,
-        "requires_passt": true,
+        "train_manifest_path": "magna_train.json",
+        "val_manifest_path": "magna_valid.json",
+        "test_manifest_path": "magna_test.json",
+        "requires_vggish": false,
+        "requires_openl3": false,
+        "requires_passt": false,
         "requires_pann": true,
-
-        "mixup": 0.3,
+        
+        "mixup": 0.0,
     
         "featurizer":{
             "name": "log_mel_featurizer",
@@ -18,19 +18,19 @@
                 "n_fft": 1024,
                 "hop_length": 320,
                 "win_length": 800,
-                "sr": 32000,
-                "n_mels": 128,
+                "sr": 16000,
+                "n_mels": 96,
 
                 "fmin": 0,
-                "fmax": 16000,
-                "fmin_aug_range": 20,
-                "fmax_aug_range": 2000,
+                "fmax": 8000,
+                "fmin_aug_range": 0,
+                "fmax_aug_range": 0,
 
                 "normalize_mean": -3.7,
                 "normalize_std": 3.1,
 
-                "freqm": 48,
-                "timem": 192
+                "freqm": 0,
+                "timem": 0
             }
         },
         "batch_size": 16,
@@ -41,34 +41,32 @@
     "model":
     {
         "backbone":{
-            "feature": "openl3",
+            "feature": "pann",
             "student": {
-                "name": "CPResNet",
+                "name": "MobileFCN",
                 "ckpt": null,
                 "args": {
-                    "rho": 7,
-                    "in_channel": 1,
-                    "base_channels": 128,
-                    "num_classes": 20
+                    "n_mels": 96,
+                    "num_classes": 50
                 }
             },
             "teacher": {
                 "name": "PretrainedFeatureClassifier",
-                "ckpt": "work_dir_openmic/pretrained_openl3/epoch=16-val_mAP=0.808.ckpt",
+                "ckpt": "work_dir_magna/lr_pann/epoch=39-val_mAP=0.442.ckpt",
                 "args": {
-                    "input_dim": 512,
-                    "num_classes": 20
+                    "input_dim": 2048,
+                    "num_classes": 50
                 }
             },
-            "reg_loss_weight": 0.8,
+            "reg_loss_weight": 0.6,
             "regularization":{
                 "name": "FeatureSpaceRegularizationLoss",
                 "args": {
                     "mode": "distance_correlation",
                     "stages_args": {
-                        "1": {"weight": 0.0, "student_expand": 1, "teacher_expand": 6},
-                        "2": {"weight": 0.0, "student_expand": 1, "teacher_expand": 6},
-                        "3": {"weight": 1.0, "student_expand": 1, "teacher_expand": 6}
+                        "1": {"weight": 0.0, "student_expand": 1, "teacher_expand": 30},
+                        "2": {"weight": 0.0, "student_expand": 1, "teacher_expand": 15},
+                        "3": {"weight": 1.0, "student_expand": 1, "teacher_expand": 15}
                     }
                 }
             }
@@ -87,7 +85,7 @@
                 "monitor": "val/loss/total",
                 "args": {
                     "factor": 0.2,
-                    "patience": 8
+                    "patience": 5
                 }
             }
         }
@@ -98,7 +96,7 @@
         "args":
         {
             "max_epochs": -1,
-            "max_steps": 80000,
+            "max_steps": 100000,
             "gradient_clip_val": 1.0,
             "num_sanity_val_steps": -1,
 
@@ -112,13 +110,13 @@
 
         "logger":
         {
-            "save_dir": "work_dir_openmic/embedding_reg_cp_resnet_rho3_openl3_reg123",
+            "save_dir": "work_dir_magna/east_final_pann",
             "name": "log"
         },
 
         "checkpoint":
         {
-            "dirpath": "work_dir_openmic/embedding_reg_cp_resnet_rho3_openl3_reg123",
+            "dirpath": "work_dir_magna/east_final_pann",
             "filename": "epoch={epoch}-val_mAP={val/mAP:.3f}",
             "auto_insert_metric_name": false,
 
@@ -132,7 +130,7 @@
         {
             "monitor": "val/loss/total",
             "mode": "min",
-            "patience": 15
+            "patience": 12
         }
     }
 }

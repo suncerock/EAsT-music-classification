@@ -2,13 +2,13 @@
     "seed": 1223,
     "data":
     {
-        "train_manifest_path": "magna_train.json",
-        "val_manifest_path": "magna_valid.json",
-        "test_manifest_path": "magna_test.json",
-        "requires_vggish": true,
-        "requires_openl3": true,
+        "train_manifest_path": "openmic_train.json",
+        "val_manifest_path": "openmic_valid.json",
+        "test_manifest_path": "openmic_test.json",
+        "requires_vggish": false,
+        "requires_openl3": false,
+        "requires_passt": false,
         "requires_pann": true,
-        "requires_passt": true,
 
         "mixup": 0,
 
@@ -19,19 +19,19 @@
         
         "batch_size": 16,
         "train_shuffle": true,
-        "num_workers": 8
+        "num_workers": 16
     },
 
     "model":
     {
         "backbone":{
-            "feature": "openl3",
+            "feature": "pann",
             "student": {
                 "name": "PretrainedFeatureClassifier",
                 "ckpt": null,
                 "args": {
-                    "input_dim": 512,
-                    "num_classes": 50
+                    "input_dim": 2048,
+                    "num_classes": 20
                 }
             },
             "teacher": null
@@ -75,20 +75,20 @@
 
         "logger":
         {
-            "save_dir": "work_dir_magna/pretrained_openl3",
+            "save_dir": "work_dir_openmic/lr_pann",
             "name": "log"
         },
 
         "checkpoint":
         {
-            "dirpath": "work_dir_magna/pretrained_openl3",
+            "dirpath": "work_dir_openmic/lr_pann",
             "filename": "epoch={epoch}-val_mAP={val/mAP:.3f}",
             "auto_insert_metric_name": false,
 
             "monitor": "val/mAP",
             "mode": "max",
             "every_n_epochs": 1,
-            "save_top_k": 3
+            "save_top_k": 1
         },
 
         "early_stopping":

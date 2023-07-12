@@ -6,10 +6,10 @@
         "val_manifest_path": "magna_valid.json",
         "test_manifest_path": "magna_test.json",
         "requires_vggish": true,
-        "requires_openl3": true,
-        "requires_pann": true,
-        "requires_passt": true,
-
+        "requires_openl3": false,
+        "requires_passt": false,
+        "requires_pann": false,
+        
         "mixup": 0.0,
     
         "featurizer":{
@@ -52,7 +52,7 @@
             },
             "teacher": {
                 "name": "PretrainedFeatureClassifier",
-                "ckpt": "work_dir_magna/pretrained_vggish/epoch=48-val_mAP=0.432.ckpt",
+                "ckpt": "work_dir_magna/lr_vggish/epoch=82-val_mAP=0.414.ckpt",
                 "args": {
                     "input_dim": 128,
                     "num_classes": 50
@@ -110,13 +110,13 @@
 
         "logger":
         {
-            "save_dir": "work_dir_magna/embedding_reg_mobile_fcn_vggish_reg123",
+            "save_dir": "work_dir_magna/east_final_vggish",
             "name": "log"
         },
 
         "checkpoint":
         {
-            "dirpath": "work_dir_magna/embedding_reg_mobile_fcn_vggish_reg123",
+            "dirpath": "work_dir_magna/east_final_vggish",
             "filename": "epoch={epoch}-val_mAP={val/mAP:.3f}",
             "auto_insert_metric_name": false,
 

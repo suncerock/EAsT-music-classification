@@ -1,0 +1,136 @@
+{
+    "seed": 1223,
+    "data":
+    {
+        "train_manifest_path": "magna_train.json",
+        "val_manifest_path": "magna_valid.json",
+        "test_manifest_path": "magna_test.json",
+        "requires_vggish": false,
+        "requires_openl3": true,
+        "requires_passt": false,
+        "requires_pann": false,
+        
+        "mixup": 0.0,
+    
+        "featurizer":{
+            "name": "log_mel_featurizer",
+            "args": {
+                "n_fft": 1024,
+                "hop_length": 320,
+                "win_length": 800,
+                "sr": 16000,
+                "n_mels": 96,
+
+                "fmin": 0,
+                "fmax": 8000,
+                "fmin_aug_range": 0,
+                "fmax_aug_range": 0,
+
+                "normalize_mean": -3.7,
+                "normalize_std": 3.1,
+
+                "freqm": 0,
+                "timem": 0
+            }
+        },
+        "batch_size": 16,
+        "train_shuffle": true,
+        "num_workers": 16
+    },
+
+    "model":
+    {
+        "backbone":{
+            "feature": "openl3",
+            "student": {
+                "name": "MobileFCN",
+                "ckpt": null,
+                "args": {
+                    "n_mels": 96,
+                    "num_classes": 50
+                }
+            },
+            "teacher": {
+                "name": "PretrainedFeatureClassifier",
+                "ckpt": "work_dir_magna/lr_openl3/epoch=26-val_mAP=0.417.ckpt",
+                "args": {
+                    "input_dim": 512,
+                    "num_classes": 50
+                }
+            },
+            "reg_loss_weight": 0.6,
+            "regularization":{
+                "name": "FeatureSpaceRegularizationLoss",
+                "args": {
+                    "mode": "distance_correlation",
+                    "stages_args": {
+                        "1": {"weight": 0.0, "student_expand": 1, "teacher_expand": 1},
+                        "2": {"weight": 0.0, "student_expand": 2, "teacher_expand": 1},
+                        "3": {"weight": 1.0, "student_expand": 2, "teacher_expand": 1}
+                    }
+                }
+            }
+        },
+
+        "optim":{
+            "optimizer": {
+                "name": "Adam",
+                "args": {
+                    "lr": 0.0001,
+                    "weight_decay": 0.0001
+                }
+            },
+            "scheduler": {
+                "name": "ReduceLROnPlateau",
+                "monitor": "val/loss/total",
+                "args": {
+                    "factor": 0.2,
+                    "patience": 5
+                }
+            }
+        }
+    },    
+
+    "trainer":
+    {
+        "args":
+        {
+            "max_epochs": -1,
+            "max_steps": 100000,
+            "gradient_clip_val": 1.0,
+            "num_sanity_val_steps": -1,
+
+            "accelerator": "gpu",
+            "devices": [0],
+            "deterministic": true,
+
+            "check_val_every_n_epoch": 1,
+            "log_every_n_steps": 50
+        },
+
+        "logger":
+        {
+            "save_dir": "work_dir_magna/east_final_openl3",
+            "name": "log"
+        },
+
+        "checkpoint":
+        {
+            "dirpath": "work_dir_magna/east_final_openl3",
+            "filename": "epoch={epoch}-val_mAP={val/mAP:.3f}",
+            "auto_insert_metric_name": false,
+
+            "monitor": "val/mAP",
+            "mode": "max",
+            "every_n_epochs": 1,
+            "save_top_k": 1
+        },
+
+        "early_stopping":
+        {
+            "monitor": "val/loss/total",
+            "mode": "min",
+            "patience": 12
+        }
+    }
+}
