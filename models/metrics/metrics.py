@@ -17,6 +17,8 @@ class MultiLabelBinaryEval(Metric):
                 idx = mask[:, i]
 
                 if sum(idx) == 0:
+                    # This will only be used in OpenMIC to avoid error
+                    # The batch does not contain any label for this class
                     continue
 
                 self.logits[i].append(logits[idx, i])
